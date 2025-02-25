@@ -1,13 +1,17 @@
 import scrapy
 import os
+import time
+import random
 
 class StandardSpider(scrapy.Spider):
     name = 'standardSpider'
-    n = 2
+    pages = 2
     start_urls = []
+    total_news = pages*10
 
     def __init__(self):
-        for i in range(self.n):
+        self.count = 0
+        for i in range(self.pages):
             if i == 0:
                 self.start_urls.append('https://thestandard.co/category/news/business/')
             else:
@@ -17,13 +21,24 @@ class StandardSpider(scrapy.Spider):
         date = response.css('div.date::text').getall()
         date = date[1]
         date = date.strip()
+
         content = response.css('div.desc::text').get()
         cleaned_content = ''.join([t.strip() for t in content if t.strip()])
-        for div in response.css('.caption'):
+
+        news_items = response.css('.caption')
+
+        for div in news_items:
             link = div.css('h3.news-title a::attr(href)').get().strip()
-            yield response.follow(link, self.parse_details, meta={'title': div.css('h3.news-title a::text').get().strip(), 'date': date, 'content_abstract': cleaned_content})
+            title = div.css('h3.news-title a::text').get().strip()
+
+            yield response.follow(
+                link,
+                self.parse_details,
+                meta={'title': title, 'date': date, 'content_abstract': cleaned_content}
+            )
 
     def parse_details(self, response):
+        time.sleep(2 + random.uniform(0.00, 0.3))
         full_html = response.body.decode('utf-8')
         link = response.url
         head = str(link).split("/")
@@ -41,6 +56,8 @@ class StandardSpider(scrapy.Spider):
 
         with open(filename, 'w', encoding='utf-8') as file:
             file.write(full_html)
+        
+        self.count += 1
 
         yield {
             # 'title': response.meta['title'],
@@ -48,4 +65,5 @@ class StandardSpider(scrapy.Spider):
             # 'content_abstract': response.meta['content_abstract'],
             'link': link,
             'html_saved_as': folder_path,
+            'count': f'{self.count} out of {self.total_news}',
         }
