@@ -60,9 +60,9 @@ class StandardSpider(scrapy.Spider):
         self.count += 1
 
         yield {
-            # 'title': response.meta['title'],
-            # 'date': response.meta['date'],
-            # 'content_abstract': response.meta['content_abstract'],
+            'title': response.meta['title'],
+            'date': response.meta['date'],
+            'content_abstract': response.meta['content_abstract'],
             'link': link,
             'html_saved_as': folder_path,
             'count': f'{self.count} out of {self.total_news}',
