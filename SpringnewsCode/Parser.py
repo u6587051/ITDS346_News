@@ -1,6 +1,6 @@
 import os
 from urllib.parse import urlparse
-import json
+import json  # You might not need this anymore, but keep it for now
 from scrapy.selector import Selector  # Import Selector
 
 class SpringNewsParser:
@@ -24,7 +24,7 @@ class SpringNewsParser:
         return folder_path
 
     def save_html_and_json(self, response, folder_name, data):
-        """บันทึกไฟล์ HTML และ JSON"""
+        """บันทึกไฟล์ HTML และ Text"""  # Changed comment
         full_html = response.body.decode('utf-8')
         folder_path = os.path.join(self.base_directory, folder_name)
 
@@ -32,18 +32,25 @@ class SpringNewsParser:
             os.makedirs(folder_path)
 
         html_filename = os.path.join(folder_path, "index.html")
-        json_filename = os.path.join(folder_path, "data.json")
+        text_filename = os.path.join(folder_path, "data.txt")  # Changed filename
 
         with open(html_filename, 'w', encoding='utf-8') as file:
             file.write(full_html)
 
-        with open(json_filename, 'w', encoding='utf-8') as file:
-            json.dump(data, file, ensure_ascii=False, indent=4)
+        # Save data as text instead of JSON
+        with open(text_filename, 'w', encoding='utf-8') as file:
+            file.write(f"Title: {data.get('title', 'No Title')}\n")
+            file.write(f"Date: {data.get('date', 'No Date')}\n")
+            file.write(f"URL: {data.get('url', 'No URL')}\n")
+            file.write(f"Original URL: {data.get('original_url', 'No Original URL')}\n")
+            file.write(f"Redirected URL: {data.get('redirected_url', 'No Redirected URL')}\n")
+            file.write(f"Folder Name: {data.get('folder_name', 'No Folder Name')}\n")
+            # You can add more data here as needed
 
         return {
             'url': response.url,
             'html_saved_as': html_filename,
-            'json_saved_as': json_filename,
+            'text_saved_as': text_filename,  # Changed key name
         }
 
     def extract_news_data_selectors(self, response):
