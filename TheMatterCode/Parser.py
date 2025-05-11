@@ -5,7 +5,7 @@ import random
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
-class StandardParser:
+class TheMatterParser:
     def __init__(self, base_output_dir):
         self.base_output_dir = base_output_dir
 
