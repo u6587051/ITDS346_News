@@ -11,6 +11,7 @@ class StandardParser:
         Initialize the parser with a directory where parsed articles will be saved.
         """
         self.base_output_dir = base_output_dir
+        self.count = 1
 
     def parse_listing(self, response):
         """
@@ -19,14 +20,18 @@ class StandardParser:
         Returns:
             A list of dicts: [{title, link, date}, ...]
         """
-        date = response.css('div.date::text').getall()
-        date = date[1].strip() if len(date) > 1 else ''
+
+        # Clean all date texts: strip spaces, remove empty lines
+        dates = [d.strip() for d in response.css('div.date::text').getall() if d.strip()]
+        
         news_items = response.css('.caption')
 
         parsed_items = []
-        for div in news_items:
+        for idx, div in enumerate(news_items):
             link = div.css('h3.news-title a::attr(href)').get()
             title = div.css('h3.news-title a::text').get()
+            date = dates[idx] if idx < len(dates) else ''  # safe fallback if no date
+
             if link and title:
                 parsed_items.append({
                     'title': title.strip(),
@@ -36,6 +41,7 @@ class StandardParser:
 
         return parsed_items
 
+
     def parse_details(self, response, metadata):
         """
         Parse the details page of an article and save both the HTML and cleaned text.
@@ -43,6 +49,7 @@ class StandardParser:
         Returns:
             A dictionary with article metadata and file save location.
         """
+        n = self.count
         time.sleep(2 + random.uniform(0.0, 0.3))  # Polite scraping delay
 
         full_html = response.body.decode('utf-8')
@@ -50,10 +57,13 @@ class StandardParser:
         content = "\n".join([t.strip() for t in all_text if t.strip()])
         ref_links = response.css("div.entry-content a::attr(href)").getall()
 
-        # Use the last part of the URL as the folder name
         link = response.url
         head = link.rstrip("/").split("/")[-1]
-        folder_path = os.path.join(self.base_output_dir, head)
+
+        # Add date as a subfolder
+        date_folder = metadata['date'].replace('/', '-').replace(':', '-').replace(' ', '_') or 'unknown_date'
+        folder_path = os.path.join(self.base_output_dir, date_folder, head)
+        sample_path = r"C:\Users\chgun\Desktop\homework\year3\semester2\Practical Data Science\sample_data_evaluation\scraped_content"
         os.makedirs(folder_path, exist_ok=True)
 
         # Save full HTML
@@ -66,6 +76,12 @@ class StandardParser:
             f_txt.write(f"Date: {metadata['date']}\n")
             f_txt.write(f"Content: {content}\n")
             f_txt.write(f"Ref link: {ref_links}\n")
+        
+        # # Save sample content for evaluation
+        # with open(os.path.join(sample_path, f"file{n}.txt"), 'w', encoding='utf-8') as f_txt:
+        #     f_txt.write(f"Content: {content}\n")
+
+        self.count += 1
 
         return {
             'title': metadata['title'],
@@ -73,3 +89,4 @@ class StandardParser:
             'link': link,
             'html_saved_as': folder_path,
         }
+
