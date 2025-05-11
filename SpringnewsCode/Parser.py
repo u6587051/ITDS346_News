@@ -2,6 +2,7 @@ import os
 from urllib.parse import urlparse
 import json  # You might not need this anymore, but keep it for now
 from scrapy.selector import Selector  # Import Selector
+from bs4 import BeautifulSoup
 
 class SpringNewsParser:
     def __init__(self, base_directory):
@@ -40,6 +41,8 @@ class SpringNewsParser:
         # Save data as text instead of JSON
         with open(text_filename, 'w', encoding='utf-8') as file:
             file.write(f"Title: {data.get('title', 'No Title')}\n")
+            file.write(f"Description: {data.get('description','No Description')}\n")
+            file.write(f"Content: {data.get('content')}\n")
             file.write(f"Date: {data.get('date', 'No Date')}\n")
             file.write(f"URL: {data.get('url', 'No URL')}\n")
             file.write(f"Original URL: {data.get('original_url', 'No Original URL')}\n")
@@ -53,12 +56,30 @@ class SpringNewsParser:
             'text_saved_as': text_filename,  # Changed key name
         }
 
+   
     def extract_news_data_selectors(self, response):
-        """Extracts title, date, and URL from HTML using Scrapy Selectors."""
 
         # Extract title
         title_selector = response.css("meta[property='og:title']::attr(content)")
-        title = title_selector.get("").strip() if title_selector else (response.css("title::text").get("").strip() if response.css("title::text").get() else "No Title")
+        title = title_selector.get("").strip() if title_selector else (
+            response.css("title::text").get("").strip() if response.css("title::text").get() else "No Title"
+        )
+
+        # Extract description
+        description_selector = response.css("meta[property='og:description']::attr(content)")
+        description = description_selector.get("").strip() if description_selector else (
+            response.css("title::text").get("").strip() if response.css("title::text").get() else "No Description"
+        )
+
+        # ✅ Extract content using BeautifulSoup
+        soup = BeautifulSoup(response.text, "html.parser")
+        paragraphs = soup.find_all("p")
+        news_content = []
+        for p in paragraphs:
+            text = p.get_text(strip=True)
+            if len(text) > 30:
+                news_content.append(text)
+        full_article = "\n".join(news_content)
 
         # Extract date
         date_selector = response.css("meta[property='article:published_time']::attr(content)")
@@ -70,9 +91,12 @@ class SpringNewsParser:
 
         return {
             "title": title,
+            "description": description,
+            "content": full_article,
             "date": date,
             "url": url
         }
+
 
     def parse_and_save(self, response, folder_name, page_id, redirected_url):
         """ทำการ parse ข้อมูลและบันทึกไฟล์"""
