@@ -16,6 +16,7 @@ class CustomCrawler:
     
     def __init__(self, pages=1, base_url="https://thematter.co/category/social/economy",
                  base_directory="/Users/tardi9rad3/Desktop/MahidolU/2024-2_ITDS364",
+                 base_directory="../newscoma_output",
                  downloaded_links_file='downloaded_TheMatter_links.txt'):
         """
         Initialize crawler with configuration parameters.
