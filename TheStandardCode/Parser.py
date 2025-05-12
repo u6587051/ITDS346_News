@@ -50,7 +50,7 @@ class StandardParser:
         # Add date as a subfolder
         date_folder = metadata['date'].replace('/', '-').replace(':', '-').replace(' ', '_') or 'unknown_date'
         folder_path = os.path.join(self.base_output_dir, date_folder, head)
-        sample_path = r"C:\Users\chgun\Desktop\homework\year3\semester2\Practical Data Science\sample_data_evaluation\scraped_content"
+        sample_path = "./newscoma_output"
         os.makedirs(folder_path, exist_ok=True)
 
         #Save full HTML

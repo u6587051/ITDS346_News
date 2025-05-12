@@ -14,7 +14,7 @@ class CustomCrawler:
         pages=1,
         items=10,
         base_url="https://thestandard.co/category/news/business/",
-        base_directory="../newscoma_output",
+        base_directory="./newscoma_output",
         downloaded_links_file='downloaded_TheStandard_links.txt'
     ):
         self.start_time = None
