@@ -1,6 +1,3 @@
-# main.py
-# Entry point to run the crawler from the command line or a script.
-
 from Crawler import CustomCrawler
 from twisted.internet import reactor
 
