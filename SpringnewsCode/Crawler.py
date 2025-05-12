@@ -113,10 +113,10 @@ class SpringSpider(scrapy.Spider):
             self.logger.warning(f"Skipping already downloaded URL: {redirected_url}")
             return  # Skip if already downloaded
 
-        folder_name = self.parser.get_folder_structure(redirected_url, page_id)  # Get the folder structure to save data
+        folder_name = self.parser.get_folder_structure(response, page_id)
 
         # Delegate the actual parsing and saving of data to the SpringNewsParser class
-        item = self.parser.parse_and_save(response, folder_name, page_id, redirected_url)
+        item = self.parser.parse_and_save(response, page_id, redirected_url)
         yield item  # Yield the parsed data (Scrapy will handle it)
 
         self.new_downloaded_links.add(redirected_url)  # Add the URL to the set of downloaded links

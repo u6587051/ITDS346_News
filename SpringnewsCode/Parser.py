@@ -35,58 +35,57 @@ class SpringNewsParser:
         # Normalize URLs for comparison (remove trailing slashes, etc.)
         return parsed_url.scheme + "://" + parsed_url.netloc + parsed_url.path == home_url
 
-    def get_folder_structure(self, url, page_id):
+    def get_folder_structure(self, response, page_id):
         """
-        Generates the folder structure where the HTML and text data for a news article
-        will be saved.  It attempts to mirror the URL structure if possible.
+        Generates a folder path like: base_dir/Spring news/YYYY-MM-DD/page_id
 
         Args:
-            url (str): The original URL of the news article.
-            page_id (int):  The unique page ID of the article.
+            response (scrapy.http.Response): The Scrapy response object.
+            page_id (int): The unique page ID of the article.
 
         Returns:
             str: The full path to the folder where the data should be saved.
         """
 
-        # Create the "Spring news" directory at the base if it doesn't exist
-        spring_news_dir = os.path.join(self.base_directory, "Spring news")
-        if not os.path.exists(spring_news_dir):
-            os.makedirs(spring_news_dir)
+        # Try to extract the publication date
+        date_selector = response.css("meta[property='article:published_time']::attr(content)")
+        date = date_selector.get("").strip() if date_selector else ""
 
-        parsed_url = urlparse(url)
-        path_parts = parsed_url.path.strip('/').split('/')  # Split the URL path into parts
-        if len(path_parts) > 1:
-            folder_path = os.path.join("news", *path_parts)  # Create a folder structure like "news/section/subsection/..."
+        # Default date folder if missing or malformed
+        if date and "T" in date:
+            date_folder = date.split("T")[0]  # Use YYYY-MM-DD
         else:
-            folder_path = str(page_id)  # If the URL is very simple, just use the page ID as the folder name
+            date_folder = "unknown-date"
 
-        return os.path.join(spring_news_dir, folder_path)  # Combine the base directory and the generated folder path
+        # Construct full path
+        spring_news_dir = os.path.join(self.base_directory, "Spring news", date_folder, str(page_id))
+        os.makedirs(spring_news_dir, exist_ok=True)
 
-    def save_html_and_json(self, response, folder_name, data):
+        return spring_news_dir
+
+    def save_html_and_json(self, response, folder_path, data):
         """
         Saves the raw HTML of the response and the extracted news data to separate files.
-
+        
         Args:
             response (scrapy.http.Response): The Scrapy response object (containing the HTML).
-            folder_name (str): The name of the folder where the files should be saved.
+            folder_path (str): The full path to the folder where the files should be saved.
             data (dict): A dictionary containing the extracted news data.
-
+        
         Returns:
             dict: A dictionary containing information about where the files were saved.
         """
-        full_html = response.body.decode('utf-8')  # Decode the HTML content
-        folder_path = os.path.join(self.base_directory, folder_name)  # Create the full folder path
+        full_html = response.body.decode('utf-8')
 
         if not os.path.exists(folder_path):
-            os.makedirs(folder_path)  # Create the folder if it doesn't exist
+            os.makedirs(folder_path)
 
-        html_filename = os.path.join(folder_path, "index.html")  # Name for the HTML file
-        text_filename = os.path.join(folder_path, "data.txt")   # Name for the text file
+        html_filename = os.path.join(folder_path, "index.html")
+        text_filename = os.path.join(folder_path, "data.txt")
 
         with open(html_filename, 'w', encoding='utf-8') as file:
-            file.write(full_html)  # Save the raw HTML
+            file.write(full_html)
 
-        # Save extracted data to a text file
         with open(text_filename, 'w', encoding='utf-8') as file:
             file.write(f"Title: {data.get('title', 'No Title')}\n")
             file.write(f"Description: {data.get('description','No Description')}\n")
@@ -97,11 +96,12 @@ class SpringNewsParser:
             file.write(f"Redirected URL: {data.get('redirected_url', 'No Redirected URL')}\n")
             file.write(f"Folder Name: {data.get('folder_name', 'No Folder Name')}\n")
 
-        return {  # Return information about where the files were saved
+        return {
             'url': response.url,
             'html_saved_as': html_filename,
             'text_saved_as': text_filename,
         }
+
 
     def extract_news_data_selectors(self, response):
         """
@@ -153,7 +153,7 @@ class SpringNewsParser:
             "url": url
         }
 
-    def parse_and_save(self, response, folder_name, page_id, redirected_url):
+    def parse_and_save(self, response, page_id, redirected_url):
         """
         Orchestrates the parsing of the HTML content and saving of the extracted data.
 
@@ -167,6 +167,10 @@ class SpringNewsParser:
             dict: The extracted data.
         """
 
+        # Extract date
+        date_selector = response.css("meta[property='article:published_time']::attr(content)")
+        date = date_selector.get("").strip() if date_selector else "No Date Found"
+
         all_text = response.xpath("//text()").getall()  # Get all text from the HTML (for potential full-text analysis)
         cleaned_text = " ".join([t.strip() for t in all_text if t.strip()])  # Clean the text (remove extra spaces)
 
@@ -177,12 +181,12 @@ class SpringNewsParser:
         data_to_save = {
                 'original_url': f'https://www.springnews.co.th/news/{page_id}',
                 'redirected_url': redirected_url,
-                'folder_name': folder_name,
             }
 
         if news_data:
             data_to_save.update(news_data)  # Merge the extracted data
 
-        self.save_html_and_json(response, folder_name, data_to_save)
+        folder_path = self.get_folder_structure(response, page_id)
+        self.save_html_and_json(response, folder_path, data_to_save)
 
         return data_to_save
