@@ -169,6 +169,7 @@ class NewsSpider(scrapy.Spider):
         for idx, item in enumerate(items, 1):
             # Skip already processed articles
             if item['link'] in self.controller.new_downloaded_links:
+                print(f"Skipping already downloaded link: {item['link']}")
                 continue
                 
             # Create request for each article's detail page

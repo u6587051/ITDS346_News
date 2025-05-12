@@ -13,7 +13,7 @@ class SpringNewsCrawler:
         self.last_num = last_num
         self.base_directory = base_directory
         self.parser = SpringNewsParser(base_directory)  # Initialize the parser
-        self.downloaded_links_file = os.path.join(base_directory, 'downloaded_links.txt')
+        self.downloaded_links_file = os.path.join(base_directory, 'downloaded_SpringNews_links.txt')
         self.downloaded_links = self.load_downloaded_links()  # Load downloaded links
 
     def load_downloaded_links(self):

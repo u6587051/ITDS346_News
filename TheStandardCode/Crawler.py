@@ -14,8 +14,8 @@ class CustomCrawler:
         pages=1,
         items=10,
         base_url="https://thestandard.co/category/news/business/",
-        base_directory=r"C:\Users\chgun\Desktop\homework\year3\semester2\Practical Data Science",
-        downloaded_links_file='downloaded_links.txt'
+        base_directory="../newscoma_output",
+        downloaded_links_file='downloaded_TheStandard_links.txt'
     ):
         self.start_time = None
         self.finish_time = None
