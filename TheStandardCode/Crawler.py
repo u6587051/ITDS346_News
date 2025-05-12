@@ -55,7 +55,7 @@ class CustomCrawler:
             yield runner.crawl(self.NewsSpider, url, self)
         reactor.stop()
 
-    # A custom Scrapy spider class used by the CustomCrawler. It receives URLs and config dynamically from the controller.
+    #A custom Scrapy spider class used by the CustomCrawler. It receives URLs and config dynamically from the controller.
     class NewsSpider(scrapy.Spider):
         name = "custom_news"
 
