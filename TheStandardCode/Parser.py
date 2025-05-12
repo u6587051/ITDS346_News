@@ -5,21 +5,14 @@ import os
 import time
 import random
 
+#Initialize the parser with a directory where parsed articles will be saved.
 class StandardParser:
     def __init__(self, base_output_dir):
-        """
-        Initialize the parser with a directory where parsed articles will be saved.
-        """
         self.base_output_dir = base_output_dir
         self.count = 1
 
+    #Parse the listing page to extract article links, titles, and dates.
     def parse_listing(self, response):
-        """
-        Parse the listing (category) page to extract article links, titles, and dates.
-
-        Returns:
-            A list of dicts: [{title, link, date}, ...]
-        """
 
         # Clean all date texts: strip spaces, remove empty lines
         dates = [d.strip() for d in response.css('div.date::text').getall() if d.strip()]
@@ -41,14 +34,8 @@ class StandardParser:
 
         return parsed_items
 
-
+    #Parse the details page of an article and save both the HTML and text file.
     def parse_details(self, response, metadata):
-        """
-        Parse the details page of an article and save both the HTML and cleaned text.
-
-        Returns:
-            A dictionary with article metadata and file save location.
-        """
         n = self.count
         time.sleep(2 + random.uniform(0.0, 0.3))  # Polite scraping delay
 
@@ -66,11 +53,11 @@ class StandardParser:
         sample_path = r"C:\Users\chgun\Desktop\homework\year3\semester2\Practical Data Science\sample_data_evaluation\scraped_content"
         os.makedirs(folder_path, exist_ok=True)
 
-        # Save full HTML
+        #Save full HTML
         with open(os.path.join(folder_path, f"{head}.html"), 'w', encoding='utf-8') as f_html:
             f_html.write(full_html)
 
-        # Save parsed metadata + content
+        #Save parsed metadata + content
         with open(os.path.join(folder_path, f"{head}.txt"), 'w', encoding='utf-8') as f_txt:
             f_txt.write(f"Title: {metadata['title']}\n")
             f_txt.write(f"Date: {metadata['date']}\n")
@@ -89,4 +76,3 @@ class StandardParser:
             'link': link,
             'html_saved_as': folder_path,
         }
-
