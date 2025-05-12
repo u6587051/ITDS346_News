@@ -16,6 +16,8 @@ class CustomCrawler:
         base_url="https://thestandard.co/category/news/business/",
         base_directory=r"C:\Users\chgun\Desktop\homework\year3\semester2\Practical Data Science",
         downloaded_links_file='downloaded_links.txt'
+        base_directory="../",
+        downloaded_links_file='downloaded_TheStandard_links.txt'
     ):
         """
         Initialize the crawler with scraping configuration.
