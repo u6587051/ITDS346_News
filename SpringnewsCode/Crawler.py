@@ -1,123 +1,92 @@
-import scrapy  # Scrapy library for web crawling
-from scrapy.crawler import CrawlerProcess  # To run the crawler
-from urllib.parse import urlparse  # For parsing URLs
-import os  # For file system operations
-from Parser import SpringNewsParser  # Custom parser class
-import time  # For adding delays
-import random  # For generating random delays
+import scrapy
+from scrapy.crawler import CrawlerProcess
+from urllib.parse import urlparse
+import os
+from Parser import SpringNewsParser
+import time
+import random
 
 class SpringNewsCrawler:
-    def __init__(self, start_num, last_num, base_directory):
-        self.start_num = start_num
-        self.last_num = last_num
+    def __init__(self, base_directory="./newscoma_output"):
         self.base_directory = base_directory
-        self.parser = SpringNewsParser(base_directory)  # Initialize the parser
+        self.parser = SpringNewsParser(base_directory)
         self.downloaded_links_file = os.path.join(base_directory, 'downloaded_SpringNews_links.txt')
-        self.downloaded_links = self.load_downloaded_links()  # Load downloaded links
+        self.downloaded_links, self.start_num = self.load_downloaded_links()
 
     def load_downloaded_links(self):
-        """
-        Loads downloaded links from a file. Creates the file if it doesn't exist.
-        This helps the crawler resume or avoid duplicate downloads.
-        """
-        downloaded_links = set()  # Use a set for efficient checking of downloaded links
+        downloaded_links = set()
+        start_num = 1
         if not os.path.exists(self.downloaded_links_file):
-            # Create the directory if it doesn't exist
             os.makedirs(os.path.dirname(self.downloaded_links_file), exist_ok=True)
-            # Create the file if it does not exist
-            open(self.downloaded_links_file, 'w', encoding='utf-8').close()  # Create an empty file
-        with open(self.downloaded_links_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                downloaded_links.add(line.strip())  # Add each URL to the set (remove any extra whitespace)
-        return downloaded_links
+            open(self.downloaded_links_file, 'w', encoding='utf-8').close()
+        else:
+            try:
+                with open(self.downloaded_links_file, 'r', encoding='utf-8') as f:
+                    first_line = f.readline().strip()
+                    if first_line:
+                        # Extract the number at the end of the line
+                        start_num_str = first_line.split('/')[-1]
+                        start_num = int(start_num_str)
+                    for line in f:
+                        downloaded_links.add(line.strip())
+            except ValueError:
+                print("Warning: Invalid start_num in downloaded_links_file. Using default start_num = 1")
+            except FileNotFoundError:
+                print("Warning: downloaded_links_file not found. Using default start_num = 1")
+        return downloaded_links, start_num
 
-    def save_downloaded_links(self, links):
-        """
-        Saves the set of downloaded links to a file.
-
-        Args:
-            links (set): A set containing the URLs that have been downloaded.
-        """
+    def save_downloaded_links(self, links, next_start_num):
         with open(self.downloaded_links_file, 'w', encoding='utf-8') as f:
+            f.write(f"") # added source to the saved file
             for link in links:
-                f.write(f"{link}\n")  # Write each link to a new line in the file
+                f.write(f"{link}\n")
 
     def run(self):
-        """
-        Starts the crawling process.  Configures Scrapy and initiates the crawl.
-        """
-        process = CrawlerProcess({  # Configure Scrapy
-            'DEFAULT_REQUEST_HEADERS': {  # Set default HTTP headers to mimic a browser
+        process = CrawlerProcess({
+            'DEFAULT_REQUEST_HEADERS': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36',
                 'Accept-Language': 'en-US,en;q=0.9',
             }
         })
-        time.sleep(2 + random.uniform(0.0, 0.3))  # Add a small random delay to be polite to the server
-        # Pass 'self' (the Crawler instance) to the spider so it can access the save_downloaded_links method
-        process.crawl(SpringSpider, self.start_num, self.last_num, self.parser, self)
-        process.start()  # Start the crawling engine
+        time.sleep(2 + random.uniform(0.0, 0.3))
+        start_num = self.start_num
+        last_num = start_num + 1000 #Prevent more news from disappearing than usual
+        process.crawl(SpringSpider, start_num, last_num, self.parser, self)
+        process.start()
+
 
 class SpringSpider(scrapy.Spider):
-    """
-    A Scrapy Spider to crawl news articles from Spring News.
-    """
-    name = 'springSpider'  # Unique name for the spider
+    name = 'springSpider'
 
     def __init__(self, start_num, last_num, parser, crawler_instance, *args, **kwargs):
-        """
-        Initializes the spider.
-
-        Args:
-            start_num (int): Starting page number.
-            last_num (int): Ending page number.
-            parser (SpringNewsParser):  Instance of the parser class.
-            crawler_instance (SpringNewsCrawler): Instance of the crawler class (to access shared data).
-            *args:  Additional arguments.
-            **kwargs: Keyword arguments.
-        """
         super().__init__(*args, **kwargs)
-        self.start_urls = [(f'https://www.springnews.co.th/news/{i}', i) for i in range(start_num, last_num + 1)]  # Generate URLs to crawl
-        self.parser = parser  # Store the parser instance
-        self.base_directory = parser.base_directory  # Store the base directory
-        self.crawler_instance = crawler_instance  # Store the Crawler instance
-        self.downloaded_links = crawler_instance.downloaded_links.copy()  # Create a *copy* to avoid accidental modification
-        self.new_downloaded_links = crawler_instance.downloaded_links.copy() # Create a copy for links downloaded in this run
+        self.start_urls = [(f'https://www.springnews.co.th/news/{i}', i) for i in range(start_num, last_num + 1)]
+        self.parser = parser
+        self.base_directory = parser.base_directory
+        self.crawler_instance = crawler_instance
+        self.downloaded_links = crawler_instance.downloaded_links.copy()
+        self.new_downloaded_links = crawler_instance.downloaded_links.copy()
 
     def start_requests(self):
-        """
-        This method is called by Scrapy to start the crawling process.
-        It generates the initial requests to be sent to the server.
-        """
         for url, page_id in self.start_urls:
-            yield scrapy.Request(url=url, callback=self.parse, meta={'page_id': page_id})  # Create a request for each URL
+            yield scrapy.Request(url=url, callback=self.parse, meta={'page_id': page_id})
 
     def parse(self, response):
-        """
-        This method is the callback function for each request. It's responsible for:
-        1.  Extracting data from the response (web page).
-        2.  Determining what to do next (e.g., follow links).
+        page_id = response.meta['page_id']
+        redirected_url = response.url
 
-        Args:
-            response (scrapy.http.Response): The response from the server (the web page).
-        """
-        page_id = response.meta['page_id']  # Get the page ID from the request's metadata
-        redirected_url = response.url  # Get the actual URL (after any redirects)
-
-        # Check if the URL was redirected to the homepage (often means the article doesn't exist)
         if self.parser.is_redirected_to_home(redirected_url):
             self.logger.warning(f"Skipping URL {redirected_url} (Redirected to homepage)")
-            return  # Stop processing this URL
+            return
 
-        # Check if the URL has already been downloaded (to prevent duplicates)
         if redirected_url in self.downloaded_links:
             self.logger.warning(f"Skipping already downloaded URL: {redirected_url}")
-            return  # Skip if already downloaded
+            return
 
-        folder_name = self.parser.get_folder_structure(redirected_url, page_id)  # Get the folder structure to save data
+        folder_name = self.parser.get_folder_structure(response, page_id)
 
-        # Delegate the actual parsing and saving of data to the SpringNewsParser class
-        item = self.parser.parse_and_save(response, folder_name, page_id, redirected_url)
-        yield item  # Yield the parsed data (Scrapy will handle it)
+        item = self.parser.parse_and_save(response, page_id, redirected_url)
+        yield item
 
-        self.new_downloaded_links.add(redirected_url)  # Add the URL to the set of downloaded links
-        self.crawler_instance.save_downloaded_links(self.new_downloaded_links)  # Update the downloaded links file
+        self.new_downloaded_links.add(redirected_url)
+        self.crawler_instance.save_downloaded_links(self.new_downloaded_links, page_id + 1)
