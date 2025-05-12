@@ -1,8 +1,6 @@
-"""
-This module contains a web parser for The Matter news website.
-It includes functionality to parse article listings and details, save content to files,
-and manually parse HTML files.
-"""
+# This module contains a web parser for The Matter news website.
+# It includes functionality to parse article listings and details, save content to files,
+# and manually parse HTML files.
 
 import os
 import re
@@ -12,30 +10,26 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
 class TheMatterParser:
-    """
-    A parser for The Matter news website that extracts article information,
-    saves content to organized directories, and provides manual parsing capabilities.
-    """
+    # A parser for The Matter news website that extracts article information,
+    # saves content to organized directories, and provides manual parsing capabilities.
     
     def __init__(self, base_output_dir):
-        """
-        Initialize the parser with a base output directory for storing scraped content.
+        # Initialize the parser with a base output directory for storing scraped content.
         
-        Args:
-            base_output_dir (str): Root directory where all scraped content will be saved
-        """
+        # Args:
+        #     base_output_dir (str): Root directory where all scraped content will be saved
+
         self.base_output_dir = base_output_dir
 
     def parse_listing(self, response):
-        """
-        Parse an article listing page to extract basic article information.
+        # Parse an article listing page to extract basic article information.
         
-        Args:
-            response: Scrapy response object containing the HTML of a listing page
+        # Args:
+        #     response: Scrapy response object containing the HTML of a listing page
             
-        Returns:
-            list: A list of dictionaries containing article titles, links, and dates
-        """
+        # Returns:
+        #     list: A list of dictionaries containing article titles, links, and dates
+
         articles = response.css("div.post_wrapper")
         parsed_items = []
 
@@ -57,16 +51,15 @@ class TheMatterParser:
         return parsed_items
 
     def parse_details(self, response, metadata):
-        """
-        Parse an article detail page to extract full content and save to files.
+        # Parse an article detail page to extract full content and save to files.
         
-        Args:
-            response: Scrapy response object containing the HTML of an article page
-            metadata (dict): Article metadata containing title, link, and date
+        # Args:
+        #     response: Scrapy response object containing the HTML of an article page
+        #     metadata (dict): Article metadata containing title, link, and date
             
-        Returns:
-            dict: Parsed article information including save location
-        """
+        # Returns:
+        #     dict: Parsed article information including save location
+
         # Add random delay to avoid overwhelming the server
         time.sleep(1 + random.uniform(0.2, 0.4))
 
@@ -116,16 +109,15 @@ class TheMatterParser:
 
     @staticmethod
     def parse_html(file_path):
-        """
-        Static method for manually parsing a saved MATTER news HTML file.
-        Useful for offline processing of previously saved articles.
+        # Static method for manually parsing a saved MATTER news HTML file.
+        # Useful for offline processing of previously saved articles.
         
-        Args:
-            file_path (str): Path to the HTML file to parse
+        # Args:
+        #     file_path (str): Path to the HTML file to parse
             
-        Returns:
-            dict: Parsed article information including title, date, content and reference links
-        """
+        # Returns:
+        #     dict: Parsed article information including title, date, content and reference links
+
         with open(file_path, 'r', encoding='utf-8') as f:
             soup = BeautifulSoup(f, 'html.parser')
 
