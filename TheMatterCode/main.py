@@ -6,10 +6,8 @@ from twisted.internet import reactor
 
 # Entry point to the program - standard Python idiom for main execution
 if __name__ == '__main__':
-    """
-    Main execution block that runs when the script is executed directly.
-    This is the starting point of the web crawling application.
-    """
+    # Main execution block that runs when the script is executed directly.
+    # This is the starting point of the web crawling application.
     
     # Initialize the crawler with configuration
     # - pages=1: Only crawl the first page of listings

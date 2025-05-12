@@ -9,23 +9,21 @@ from scrapy.http import Request  # For creating HTTP requests
 from scrapy.utils.log import configure_logging  # For logging configuration
 
 class CustomCrawler:
-    """
-    Main controller class that orchestrates the entire crawling process.
-    Handles configuration, URL management, and spider execution.
-    """
+    # Main controller class that orchestrates the entire crawling process.
+    # Handles configuration, URL management, and spider execution.
     
     def __init__(self, pages=1, base_url="https://thematter.co/category/social/economy",
                  base_directory="./newscoma_output",
                  downloaded_links_file='downloaded_TheMatter_links.txt'):
-        """
-        Initialize crawler with configuration parameters.
+
+        # Initialize crawler with configuration parameters.
         
-        Args:
-            pages (int): Number of listing pages to crawl
-            base_url (str): Starting URL for the crawl
-            base_directory (str): Root directory for output storage
-            downloaded_links_file (str): Filename to track crawled URLs
-        """
+        # Args:
+        #     pages (int): Number of listing pages to crawl
+        #     base_url (str): Starting URL for the crawl
+        #     base_directory (str): Root directory for output storage
+        #     downloaded_links_file (str): Filename to track crawled URLs
+
         # Basic configuration setup
         self.pages = pages
         self.base_url = base_url
@@ -45,10 +43,8 @@ class CustomCrawler:
         self.parser = TheMatterParser(self.output_directory)
 
     def load_downloaded_links(self):
-        """
-        Load previously crawled URLs from tracking file.
-        Maintains continuity between crawling sessions.
-        """
+        # Load previously crawled URLs from tracking file.
+        # Maintains continuity between crawling sessions.
         if os.path.exists(self.downloaded_links_path):
             with open(self.downloaded_links_path, "r", encoding="utf-8") as f:
                 return [line.strip() for line in f.readlines()]
@@ -65,10 +61,8 @@ class CustomCrawler:
 
     @defer.inlineCallbacks
     def run(self):
-        """
-        Main asynchronous execution method.
-        Coordinates the crawling process using Scrapy's CrawlerRunner.
-        """
+        # Main asynchronous execution method.
+        # Coordinates the crawling process using Scrapy's CrawlerRunner.
         configure_logging()  # Set up Scrapy's logging system
         runner = CrawlerRunner()  # Create crawler orchestration object
         deferreds = []  # Store asynchronous tasks
@@ -90,10 +84,8 @@ class CustomCrawler:
         reactor.stop()  # Shut down the async reactor
 
 class NewsSpider(scrapy.Spider):
-    """
-    Scrapy spider implementation that handles the actual web crawling.
-    Contains the logic for navigating pages and extracting content.
-    """
+    # Scrapy spider implementation that handles the actual web crawling.
+    # Contains the logic for navigating pages and extracting content.
     
     name = "thematter_news"  # Unique identifier for this spider
 
@@ -142,24 +134,21 @@ class NewsSpider(scrapy.Spider):
     }
 
     def __init__(self, url, controller: CustomCrawler, *args, **kwargs):
-        """
-        Initialize spider instance with specific URL and controller reference.
+        # Initialize spider instance with specific URL and controller reference.
         
-        Args:
-            url (str): Starting URL for this spider instance
-            controller (CustomCrawler): Reference to main controller
-        """
+        # Args:
+        #     url (str): Starting URL for this spider instance
+        #     controller (CustomCrawler): Reference to main controller
         super().__init__(*args, **kwargs)
         self.start_urls = [url]  # URL(s) to start crawling from
         self.controller = controller  # Link to parent controller
 
     def parse(self, response):
-        """
-        Parse article listing page to extract individual article links.
+        # Parse article listing page to extract individual article links.
         
-        Args:
-            response: Scrapy response object containing the page HTML
-        """
+        # Args:
+        #     response: Scrapy response object containing the page HTML
+
         # Extract article metadata from listing page
         items = self.controller.parser.parse_listing(response)
         total = len(items)
@@ -184,12 +173,11 @@ class NewsSpider(scrapy.Spider):
             )
 
     def parse_details(self, response):
-        """
-        Parse individual article page to extract full content.
+        # Parse individual article page to extract full content.
         
-        Args:
-            response: Scrapy response object containing the article HTML
-        """
+        # Args:
+        #     response: Scrapy response object containing the article HTML
+
         # Retrieve metadata passed from listing page
         item = response.meta['item']
         idx = response.meta['idx']
