@@ -1,4 +1,4 @@
-from Crawler import SpringNewsCrawler
+from Crawler import SpringNewsCrawler  # Import the SpringNewsCrawler class
 
 if __name__ == '__main__':
     start_num = 857630
