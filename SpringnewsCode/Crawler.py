@@ -15,7 +15,7 @@ class SpringNewsCrawler:
 
     def load_downloaded_links(self):
         downloaded_links = set()
-        start_num = 1
+        start_num = 828586 #First new that attach in business category
         if not os.path.exists(self.downloaded_links_file):
             os.makedirs(os.path.dirname(self.downloaded_links_file), exist_ok=True)
             open(self.downloaded_links_file, 'w', encoding='utf-8').close()
@@ -35,7 +35,7 @@ class SpringNewsCrawler:
                 print("Warning: downloaded_links_file not found. Using default start_num = 1")
         return downloaded_links, start_num
 
-    def save_downloaded_links(self, links, next_start_num):
+    def save_downloaded_links(self, links):
         with open(self.downloaded_links_file, 'w', encoding='utf-8') as f:
             f.write(f"") # added source to the saved file
             for link in links:
@@ -78,15 +78,15 @@ class SpringSpider(scrapy.Spider):
         if self.parser.is_redirected_to_home(redirected_url):
             self.logger.warning(f"Skipping URL {redirected_url} (Redirected to homepage)")
             return
-
+        if not redirected_url.startswith("https://www.springnews.co.th/digital-business/"):
+            self.logger.warning(f"Skipping URL {redirected_url} (Not under /digital-business/)")
+            return
         if redirected_url in self.downloaded_links:
             self.logger.warning(f"Skipping already downloaded URL: {redirected_url}")
             return
-
-        folder_name = self.parser.get_folder_structure(response, page_id)
 
         item = self.parser.parse_and_save(response, page_id, redirected_url)
         yield item
 
         self.new_downloaded_links.add(redirected_url)
-        self.crawler_instance.save_downloaded_links(self.new_downloaded_links, page_id + 1)
+        self.crawler_instance.save_downloaded_links(self.new_downloaded_links)
